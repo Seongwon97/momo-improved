@@ -24,4 +24,15 @@ public class GroupSearchRequest {
     public SearchCondition toFindCondition() {
         return new SearchCondition(category, keyword, excludeFinished, orderByDeadline);
     }
+
+    @Override
+    public String toString() {
+        return "GroupSearchRequest{" +
+                "page=" + page +
+                ", category=" + category +
+                ", keyword='" + keyword + '\'' +
+                ", excludeFinished=" + excludeFinished +
+                ", orderByDeadline=" + orderByDeadline +
+                '}';
+    }
 }

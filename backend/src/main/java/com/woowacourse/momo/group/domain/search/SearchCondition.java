@@ -25,4 +25,14 @@ public class SearchCondition {
     public boolean orderByDeadline() {
         return orderByDeadline;
     }
+
+    @Override
+    public String toString() {
+        return "SearchCondition{" +
+                "category=" + category +
+                ", keyword='" + keyword + '\'' +
+                ", excludeFinished=" + excludeFinished +
+                ", orderByDeadline=" + orderByDeadline +
+                '}';
+    }
 }

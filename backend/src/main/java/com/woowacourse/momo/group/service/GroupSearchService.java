@@ -63,6 +63,7 @@ public class GroupSearchService {
         return GroupResponseAssembler.groupResponse(group, imageUrl, favoriteChecked);
     }
 
+    @Cacheable(value = "findGroups", cacheManager = "cacheManager")
     public GroupPageResponse findGroups(GroupSearchRequest request) {
         SearchCondition searchCondition = request.toFindCondition();
         Pageable pageable = defaultPageable(request);
