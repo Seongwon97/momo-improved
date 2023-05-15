@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +47,7 @@ public class GroupModifyService {
     private final ParticipantRepository participantRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    @CacheEvict(value = "Groups", cacheManager = "cacheManager", allEntries = true)
     @Transactional
     public GroupIdResponse create(Long memberId, GroupRequest request) {
         Member host = memberFindService.findMember(memberId);
@@ -77,6 +79,7 @@ public class GroupModifyService {
         }
     }
 
+    @CacheEvict(value = "Groups", cacheManager = "cacheManager", allEntries = true)
     @Transactional
     public void update(Long hostId, Long groupId, GroupRequest request) {
         ifMemberIsHost(hostId, groupId, (host, group) -> {
