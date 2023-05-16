@@ -8,6 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,7 +80,9 @@ public class GroupModifyService {
         }
     }
 
-    @CacheEvict(value = "Groups", cacheManager = "cacheManager", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "Groups", cacheManager = "cacheManager", allEntries = true),
+            @CacheEvict(value = "Group", key = "#groupId", cacheManager = "cacheManager")})
     @Transactional
     public void update(Long hostId, Long groupId, GroupRequest request) {
         ifMemberIsHost(hostId, groupId, (host, group) -> {
@@ -127,11 +130,13 @@ public class GroupModifyService {
         }
     }
 
+    @CacheEvict(value = "Group", key = "#groupId", cacheManager = "cacheManager")
     @Transactional
     public void closeEarly(Long hostId, Long groupId) {
         ifMemberIsHost(hostId, groupId, (host, group) -> group.closeEarly());
     }
 
+    @CacheEvict(value = "Group", key = "#groupId", cacheManager = "cacheManager")
     @Transactional
     public void delete(Long hostId, Long groupId) {
         ifMemberIsHost(hostId, groupId, (host, group) -> {
