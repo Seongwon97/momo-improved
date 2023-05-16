@@ -124,13 +124,13 @@ public class GroupSearchService {
     }
 
     private List<GroupSummaryRepositoryResponse> convertImageUrl(
-            GroupSummaryRepositoryResponses groupSummaryRepositoryResponses) {
-        for (GroupSummaryRepositoryResponse repositoryResponse : groupSummaryRepositoryResponses.getContent()) {
+            List<GroupSummaryRepositoryResponse> groupSummaryRepositoryResponses) {
+        for (GroupSummaryRepositoryResponse repositoryResponse : groupSummaryRepositoryResponses) {
             String imageName = repositoryResponse.getImageName();
             String imageUrl = imageProvider.generateGroupImageUrl(imageName,
                     repositoryResponse.getCategory().isDefaultImage(imageName));
             repositoryResponse.setImageName(imageUrl);
         }
-        return groupSummaryRepositoryResponses.getContent();
+        return groupSummaryRepositoryResponses;
     }
 }

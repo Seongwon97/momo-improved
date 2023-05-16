@@ -39,7 +39,7 @@ public class GroupSummaryRepositoryResponse {
         this.category = category;
         this.capacity = capacity;
         this.numOfParticipant = numOfParticipant;
-        this.isClosedEarly = isClosedEarly;
+        this.closedEarly = closedEarly;
         this.deadline = deadline;
 
         boolean defaultImage = isDefaultImage(imageName);
