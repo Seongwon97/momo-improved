@@ -19,15 +19,21 @@ import com.woowacourse.momo.member.service.dto.response.MemberResponseAssembler;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class GroupResponseAssembler {
 
-    public static GroupResponse groupResponse(Group group, String imageUrl, boolean isMemberLiked) {
-        return new GroupResponse(group.getName(), MemberResponseAssembler.memberResponse(group.getHost()),
-                group.getCategory().getId(), group.getCapacity(), durationResponse(group.getDuration()),
-                scheduleResponses(group.getSchedules()), group.isFinishedRecruitment(), group.getDeadline(),
-                locationResponse(group.getLocation()), isMemberLiked, group.getDescription().getValue(),
-                imageUrl);
+    public static CachedGroupResponse cachedGroupResponse(Group group) {
+        return new CachedGroupResponse(group.getId(), group.getName(),
+                MemberResponseAssembler.memberResponse(group.getHost()), group.getCategory(), group.getCapacity(),
+                durationResponse(group.getDuration()), scheduleResponses(group.getSchedules()),
+                group.isFinishedRecruitment(), group.getDeadline(), locationResponse(group.getLocation()),
+                group.getDescription().getValue());
     }
 
-    public static GroupResponse groupResponse(Group group, String imageUrl) {
+    public static GroupResponse groupResponse(CachedGroupResponse group, String imageUrl, boolean isMemberLiked) {
+        return new GroupResponse(group.getName(), group.getHost(), group.getCategory().getId(), group.getCapacity(),
+                group.getDuration(), group.getSchedules(), group.isFinished(), group.getDeadline(),
+                group.getLocation(), isMemberLiked, group.getDescription(), imageUrl);
+    }
+
+    public static GroupResponse groupResponse(CachedGroupResponse group, String imageUrl) {
         return groupResponse(group, imageUrl, false);
     }
 
