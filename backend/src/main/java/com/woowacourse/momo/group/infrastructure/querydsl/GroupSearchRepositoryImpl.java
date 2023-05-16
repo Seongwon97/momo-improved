@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
@@ -29,7 +29,6 @@ import com.woowacourse.momo.group.domain.search.GroupSearchRepositoryCustom;
 import com.woowacourse.momo.group.domain.search.SearchCondition;
 import com.woowacourse.momo.group.domain.search.dto.GroupIdRepositoryResponse;
 import com.woowacourse.momo.group.domain.search.dto.GroupSummaryRepositoryResponse;
-import com.woowacourse.momo.group.domain.search.dto.GroupSummaryRepositoryResponses;
 
 @Repository
 public class GroupSearchRepositoryImpl implements GroupSearchRepositoryCustom {
@@ -43,8 +42,7 @@ public class GroupSearchRepositoryImpl implements GroupSearchRepositoryCustom {
     }
 
     @Override
-    @Cacheable(value = "Groups", cacheManager = "cacheManager")
-    public GroupSummaryRepositoryResponses findGroups(SearchCondition condition, Pageable pageable) {
+    public Page<GroupSummaryRepositoryResponse> findGroups(SearchCondition condition, Pageable pageable) {
         List<Long> groupIds = queryFactory
                 .select(group.id)
                 .from(group)
@@ -71,25 +69,24 @@ public class GroupSearchRepositoryImpl implements GroupSearchRepositoryCustom {
                 .leftJoin(group.participants.participants, participant)
                 .where(conditionFilter.filterByCondition(condition));
 
-        return new GroupSummaryRepositoryResponses(
-                PageableExecutionUtils.getPage(groups, pageable, countQuery::fetchOne));
+        return PageableExecutionUtils.getPage(groups, pageable, countQuery::fetchOne);
     }
 
     @Override
-    public GroupSummaryRepositoryResponses findHostedGroups(SearchCondition condition, Long memberId,
-                                                            Pageable pageable) {
+    public Page<GroupSummaryRepositoryResponse> findHostedGroups(SearchCondition condition, Long memberId,
+                                                                 Pageable pageable) {
         return findGroups(condition, pageable, () -> isHost(memberId));
     }
 
     @Override
-    public GroupSummaryRepositoryResponses findParticipatedGroups(SearchCondition condition, Long memberId,
-                                                                  Pageable pageable) {
+    public Page<GroupSummaryRepositoryResponse> findParticipatedGroups(SearchCondition condition, Long memberId,
+                                                                       Pageable pageable) {
         return findGroups(condition, pageable, () -> isParticipated(memberId));
     }
 
     @Override
-    public GroupSummaryRepositoryResponses findLikedGroups(SearchCondition condition, Long memberId,
-                                                           Pageable pageable) {
+    public Page<GroupSummaryRepositoryResponse> findLikedGroups(SearchCondition condition, Long memberId,
+                                                                Pageable pageable) {
         List<Long> likedGroupIds = findLikedGroupIds(condition, memberId, pageable);
 
         List<GroupSummaryRepositoryResponse> groups = queryFactory
@@ -114,8 +111,7 @@ public class GroupSearchRepositoryImpl implements GroupSearchRepositoryCustom {
                         conditionFilter.filterByCondition(condition)
                 );
 
-        return new GroupSummaryRepositoryResponses(
-                PageableExecutionUtils.getPage(groups, pageable, countQuery::fetchOne));
+        return PageableExecutionUtils.getPage(groups, pageable, countQuery::fetchOne);
     }
 
     private List<Long> findLikedGroupIds(SearchCondition condition, Long memberId, Pageable pageable) {
@@ -133,8 +129,8 @@ public class GroupSearchRepositoryImpl implements GroupSearchRepositoryCustom {
                 .fetch();
     }
 
-    private GroupSummaryRepositoryResponses findGroups(SearchCondition condition, Pageable pageable,
-                                                       Supplier<BooleanExpression> mainCondition) {
+    private Page<GroupSummaryRepositoryResponse> findGroups(SearchCondition condition, Pageable pageable,
+                                                            Supplier<BooleanExpression> mainCondition) {
         List<Long> groupIds = queryFactory
                 .select(makeGroupIdRepositoryResponse())
                 .distinct()
@@ -173,8 +169,7 @@ public class GroupSearchRepositoryImpl implements GroupSearchRepositoryCustom {
                         conditionFilter.filterByCondition(condition)
                 );
 
-        return new GroupSummaryRepositoryResponses(
-                PageableExecutionUtils.getPage(groups, pageable, countQuery::fetchOne));
+        return PageableExecutionUtils.getPage(groups, pageable, countQuery::fetchOne);
     }
 
     private static ConstructorExpression<GroupSummaryRepositoryResponse> makeProjections() {
@@ -188,8 +183,8 @@ public class GroupSearchRepositoryImpl implements GroupSearchRepositoryCustom {
                 group.participants.capacity.value,
                 participant.count().intValue().add(host),
                 group.closedEarly,
-                group.calendar.deadline.value,
-                groupImage.imageName
+                group.calendar.deadline.value
+//                groupImage.imageName
         );
     }
 
