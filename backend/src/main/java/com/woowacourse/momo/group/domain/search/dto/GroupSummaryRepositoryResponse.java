@@ -2,11 +2,18 @@ package com.woowacourse.momo.group.domain.search.dto;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import com.woowacourse.momo.category.domain.Category;
 
 @Getter
+@NoArgsConstructor
 public class GroupSummaryRepositoryResponse {
 
     private Long groupId;
@@ -16,12 +23,14 @@ public class GroupSummaryRepositoryResponse {
     private Category category;
     private int capacity;
     private int numOfParticipant;
-    private boolean isClosedEarly;
+    private boolean closedEarly;
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime deadline;
     private String imageName;
 
     public GroupSummaryRepositoryResponse(Long groupId, String groupName, Long hostId, String hostName,
-                                          Category category, int capacity, int numOfParticipant, boolean isClosedEarly,
+                                          Category category, int capacity, int numOfParticipant, boolean closedEarly,
                                           LocalDateTime deadline, String imageName) {
         this.groupId = groupId;
         this.groupName = groupName;
@@ -30,7 +39,7 @@ public class GroupSummaryRepositoryResponse {
         this.category = category;
         this.capacity = capacity;
         this.numOfParticipant = numOfParticipant;
-        this.isClosedEarly = isClosedEarly;
+        this.closedEarly = closedEarly;
         this.deadline = deadline;
 
         boolean defaultImage = isDefaultImage(imageName);

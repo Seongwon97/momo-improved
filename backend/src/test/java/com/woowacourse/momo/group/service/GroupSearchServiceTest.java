@@ -91,7 +91,8 @@ class GroupSearchServiceTest {
         String imageUrl = imageProvider.generateGroupImageUrl(group1.getCategory().getDefaultImageName(), true);
 
         GroupResponse actual = groupSearchService.findGroup(group1.getId());
-        GroupResponse expected = GroupResponseAssembler.groupResponse(group1, imageUrl);
+        GroupResponse expected = GroupResponseAssembler.groupResponse(
+                GroupResponseAssembler.cachedGroupResponse(group1), imageUrl);
 
         assertThat(actual).usingRecursiveComparison()
                 .isEqualTo(expected);
@@ -127,7 +128,7 @@ class GroupSearchServiceTest {
 
         assertThat(actual.getGroups()).hasSize(1);
         assertThat(actual.getGroups().get(0).getImageUrl())
-            .endsWith("/group/default/thumbnail_study.jpg");
+                .endsWith("/group/default/thumbnail_study.jpg");
     }
 
     @DisplayName("키워드를 포함하는 이름의 모임을 조회한다")

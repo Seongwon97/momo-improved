@@ -11,13 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
+import com.woowacourse.momo.category.domain.Category;
 import com.woowacourse.momo.favorite.domain.Favorite;
 import com.woowacourse.momo.favorite.domain.FavoriteRepository;
-import com.woowacourse.momo.group.domain.Group;
 import com.woowacourse.momo.group.domain.search.GroupSearchRepository;
 import com.woowacourse.momo.group.domain.search.SearchCondition;
 import com.woowacourse.momo.group.domain.search.dto.GroupSummaryRepositoryResponse;
+import com.woowacourse.momo.group.domain.search.dto.GroupSummaryRepositoryResponses;
 import com.woowacourse.momo.group.service.dto.request.GroupSearchRequest;
+import com.woowacourse.momo.group.service.dto.response.CachedGroupResponse;
 import com.woowacourse.momo.group.service.dto.response.GroupPageResponse;
 import com.woowacourse.momo.group.service.dto.response.GroupResponse;
 import com.woowacourse.momo.group.service.dto.response.GroupResponseAssembler;
@@ -42,39 +44,48 @@ public class GroupSearchService {
     private final ImageProvider imageProvider;
 
     public GroupResponse findGroup(Long groupId) {
-        Group group = groupFindService.findByIdWithHostAndSchedule(groupId);
-        String imageUrl = getImageUrl(group);
+        CachedGroupResponse group = groupFindService.findByIdWithHostAndSchedule(groupId);
+        String imageUrl = getImageUrl(group.getId(), group.getCategory());
         return GroupResponseAssembler.groupResponse(group, imageUrl);
     }
 
-    private String getImageUrl(Group group) {
-        String imageName = groupImageRepository.findByGroupId(group.getId())
+    private String getImageUrl(Long groupId, Category category) {
+        String imageName = groupImageRepository.findByGroupId(groupId)
                 .map(GroupImage::getImageName)
-                .orElse(group.getCategory().getDefaultImageName());
-        return imageProvider.generateGroupImageUrl(imageName, group.getCategory().isDefaultImage(imageName));
+                .orElse(category.getDefaultImageName());
+        return imageProvider.generateGroupImageUrl(imageName, category.isDefaultImage(imageName));
     }
 
     public GroupResponse findGroup(Long groupId, Long memberId) {
         memberValidator.validateExistMember(memberId);
         boolean favoriteChecked = favoriteRepository.existsByGroupIdAndMemberId(groupId, memberId);
 
-        Group group = groupFindService.findByIdWithHostAndSchedule(groupId);
-        String imageUrl = getImageUrl(group);
+        CachedGroupResponse group = groupFindService.findByIdWithHostAndSchedule(groupId);
+        String imageUrl = getImageUrl(group.getId(), group.getCategory());
         return GroupResponseAssembler.groupResponse(group, imageUrl, favoriteChecked);
     }
 
     public GroupPageResponse findGroups(GroupSearchRequest request) {
         SearchCondition searchCondition = request.toFindCondition();
         Pageable pageable = defaultPageable(request);
-        Page<GroupSummaryRepositoryResponse> groups = groupSearchRepository.findGroups(searchCondition, pageable);
+        GroupSummaryRepositoryResponses groups = groupFindService.findGroups(searchCondition, pageable);
 
-        List<GroupSummaryRepositoryResponse> groupsOfPage = convertImageUrl(groups);
+        List<GroupSummaryRepositoryResponse> groupsOfPage = convertImageUrl(groups.getContent());
         List<GroupSummaryResponse> summaries = GroupResponseAssembler.groupSummaryResponses(groupsOfPage);
         return GroupResponseAssembler.groupPageResponse(summaries, groups.hasNext(), request.getPage());
     }
 
     public GroupPageResponse findGroups(GroupSearchRequest request, Long memberId) {
-        return findGroupsRelatedMember(request, memberId, groupSearchRepository::findGroups);
+        memberValidator.validateExistMember(memberId);
+        List<Favorite> favorites = favoriteRepository.findAllByMemberId(memberId);
+
+        SearchCondition searchCondition = request.toFindCondition();
+        Pageable pageable = defaultPageable(request);
+        GroupSummaryRepositoryResponses groups = groupFindService.findGroups(searchCondition, pageable);
+
+        List<GroupSummaryRepositoryResponse> groupsOfPage = convertImageUrl(groups.getContent());
+        List<GroupSummaryResponse> summaries = GroupResponseAssembler.groupSummaryResponses(groupsOfPage, favorites);
+        return GroupResponseAssembler.groupPageResponse(summaries, groups.hasNext(), request.getPage());
     }
 
     public GroupPageResponse findParticipatedGroups(GroupSearchRequest request, Long memberId) {
@@ -103,7 +114,7 @@ public class GroupSearchService {
         Pageable pageable = defaultPageable(request);
         Page<GroupSummaryRepositoryResponse> groups = function.apply(searchCondition, pageable);
 
-        List<GroupSummaryRepositoryResponse> groupsOfPage = convertImageUrl(groups);
+        List<GroupSummaryRepositoryResponse> groupsOfPage = convertImageUrl(groups.getContent());
         List<GroupSummaryResponse> summaries = GroupResponseAssembler.groupSummaryResponses(groupsOfPage, favorites);
         return GroupResponseAssembler.groupPageResponse(summaries, groups.hasNext(), request.getPage());
     }
@@ -112,12 +123,14 @@ public class GroupSearchService {
         return PageRequest.of(request.getPage(), DEFAULT_PAGE_SIZE);
     }
 
-    private List<GroupSummaryRepositoryResponse> convertImageUrl(Page<GroupSummaryRepositoryResponse> repositoryResponses) {
-        for (GroupSummaryRepositoryResponse repositoryResponse : repositoryResponses.getContent()) {
+    private List<GroupSummaryRepositoryResponse> convertImageUrl(
+            List<GroupSummaryRepositoryResponse> groupSummaryRepositoryResponses) {
+        for (GroupSummaryRepositoryResponse repositoryResponse : groupSummaryRepositoryResponses) {
             String imageName = repositoryResponse.getImageName();
-            String imageUrl = imageProvider.generateGroupImageUrl(imageName, repositoryResponse.getCategory().isDefaultImage(imageName));
+            String imageUrl = imageProvider.generateGroupImageUrl(imageName,
+                    repositoryResponse.getCategory().isDefaultImage(imageName));
             repositoryResponse.setImageName(imageUrl);
         }
-        return repositoryResponses.getContent();
+        return groupSummaryRepositoryResponses;
     }
 }
