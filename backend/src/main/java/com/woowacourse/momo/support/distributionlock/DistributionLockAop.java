@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.woowacourse.momo.global.exception.exception.GlobalErrorCode;
+import com.woowacourse.momo.global.exception.exception.MomoException;
+
 @Component
 @Aspect
 @RequiredArgsConstructor
@@ -34,14 +37,13 @@ public class DistributionLockAop {
         RLock lock = redissonClient.getLock(key);
         try {
             if (!lock.tryLock(distributionLock.waitTime(), distributionLock.leaseTime(), distributionLock.timeUnit())) {
-                // TODO: MomoException 으로 변경할 것
-                throw new RuntimeException("Lock 획득을 실패했습니다");
+                throw new MomoException(GlobalErrorCode.LOCK_ACQUISITION_FAILED_ERROR);
             }
             log.info("lock - " + key);
             return joinPoint.proceed();
         } catch (InterruptedException e) {
             log.error(e.getMessage());
-            throw new RuntimeException(e);
+            throw new MomoException(GlobalErrorCode.LOCK_INTERRUPTED_ERROR);
         } finally {
             log.info("unlock - " + key);
             lock.unlock();
