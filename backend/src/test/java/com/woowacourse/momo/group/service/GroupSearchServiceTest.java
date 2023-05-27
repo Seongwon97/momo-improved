@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +57,7 @@ class GroupSearchServiceTest {
     private final MemberRepository memberRepository;
     private final FavoriteRepository favoriteRepository;
     private final ImageProvider imageProvider;
+    private final CacheManager cacheManager;
 
     private Member host;
     private Group group1;
@@ -67,6 +69,8 @@ class GroupSearchServiceTest {
 
     @BeforeEach
     void setUp() {
+        cacheManager.getCache("Groups").clear();
+        cacheManager.getCache("Group").clear();
         host = memberRepository.save(MOMO.toMember());
         group1 = groupRepository.save(constructGroup("모모의 스터디", host, STUDY, 5, 이틀후_23시_59분까지));
         favoriteRepository.save(new Favorite(group1.getId(), host.getId()));
