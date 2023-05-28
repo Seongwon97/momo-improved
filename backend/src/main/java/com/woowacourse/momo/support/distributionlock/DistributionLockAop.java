@@ -24,6 +24,7 @@ public class DistributionLockAop {
     private static final String LOCK_PREFIX = "LOCK: ";
 
     private final RedissonClient redissonClient;
+    private final TransactionGeneratorAop transactionGeneratorAop;
 
     @Around("@annotation(com.woowacourse.momo.support.distributionlock.DistributionLock)")
     public Object lock(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -40,7 +41,7 @@ public class DistributionLockAop {
                 throw new MomoException(GlobalErrorCode.LOCK_ACQUISITION_FAILED_ERROR);
             }
             log.info("lock - " + key);
-            return joinPoint.proceed();
+            return transactionGeneratorAop.proceed(joinPoint);
         } catch (InterruptedException e) {
             log.error(e.getMessage());
             throw new MomoException(GlobalErrorCode.LOCK_INTERRUPTED_ERROR);

@@ -5,6 +5,8 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -22,25 +24,24 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
 import com.woowacourse.momo.auth.service.AuthService;
 import com.woowacourse.momo.auth.service.dto.request.LoginRequest;
-import com.woowacourse.momo.fixture.GroupFixture;
 import com.woowacourse.momo.fixture.calendar.ScheduleFixture;
-import com.woowacourse.momo.group.service.GroupFindService;
 import com.woowacourse.momo.group.service.GroupModifyService;
 import com.woowacourse.momo.group.service.ParticipateService;
 import com.woowacourse.momo.group.service.dto.request.GroupRequest;
 import com.woowacourse.momo.member.service.MemberService;
 import com.woowacourse.momo.member.service.dto.request.SignUpRequest;
 
+@Sql(value = "classpath:init.sql", executionPhase = BEFORE_TEST_METHOD)
+@Sql(value = "classpath:truncate.sql", executionPhase = AFTER_TEST_METHOD)
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
-@Transactional
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 @SpringBootTest
@@ -54,7 +55,6 @@ class ParticipateControllerTest {
     private final AuthService authService;
     private final MemberService memberService;
     private final GroupModifyService groupModifyService;
-    private final GroupFindService groupFindService;
 
     @DisplayName("모임에 참여한다")
     @Test
@@ -222,7 +222,7 @@ class ParticipateControllerTest {
         participateMember(groupId, participantId);
         String accessToken = accessToken("participant");
 
-        GroupFixture.setDeadlinePast(groupFindService.findGroup(groupId), 1);
+        groupModifyService.closeEarly(hostId, groupId);
 
         mockMvc.perform(delete(BASE_URL + groupId + RESOURCE)
                         .header("Authorization", "bearer " + accessToken))

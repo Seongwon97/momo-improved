@@ -2,6 +2,8 @@ package com.woowacourse.momo.group.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
 
 import static com.woowacourse.momo.fixture.GroupFixture.MOMO_STUDY;
 import static com.woowacourse.momo.fixture.MemberFixture.DUDU;
@@ -9,9 +11,6 @@ import static com.woowacourse.momo.fixture.MemberFixture.MOMO;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,10 +20,10 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
+import org.springframework.test.context.jdbc.Sql;
 
 import lombok.RequiredArgsConstructor;
 
-import com.woowacourse.momo.fixture.GroupFixture;
 import com.woowacourse.momo.group.domain.Group;
 import com.woowacourse.momo.group.domain.GroupRepository;
 import com.woowacourse.momo.group.exception.GroupException;
@@ -34,7 +33,8 @@ import com.woowacourse.momo.member.exception.MemberException;
 import com.woowacourse.momo.member.service.MemberService;
 import com.woowacourse.momo.member.service.dto.response.MemberResponse;
 
-@Transactional
+@Sql(value = "classpath:init.sql", executionPhase = BEFORE_TEST_METHOD)
+@Sql(value = "classpath:truncate.sql", executionPhase = AFTER_TEST_METHOD)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 @SpringBootTest
@@ -45,7 +45,6 @@ class ParticipateServiceTest {
     private final MemberService memberService;
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
-    private final EntityManager entityManager;
 
     private Group group;
     private Member host;
@@ -183,7 +182,6 @@ class ParticipateServiceTest {
         @Test
         void leave() {
             participateService.leave(groupId, participantId);
-            synchronize();
 
             List<Long> participantIds = participateService.findParticipants(groupId)
                     .stream()
@@ -195,19 +193,17 @@ class ParticipateServiceTest {
         @DisplayName("모집 마감이 끝난 모임에는 탈퇴할 수 없다")
         @Test
         void leaveDeadline() {
-            GroupFixture.setDeadlinePast(group, 1);
-            synchronize();
+            groupModifyService.closeEarly(hostId, groupId);
 
             assertThatThrownBy(() -> participateService.leave(groupId, participantId))
                     .isInstanceOf(GroupException.class)
-                    .hasMessage("해당 모임은 마감기한이 지났습니다.");
+                    .hasMessage("해당 모임은 조기 마감되어 있습니다.");
         }
 
         @DisplayName("조기 종료된 모임에는 탈퇴할 수 없다")
         @Test
         void deleteEarlyClosed() {
             groupModifyService.closeEarly(hostId, groupId);
-            synchronize();
 
             assertThatThrownBy(() -> participateService.leave(groupId, participantId))
                     .isInstanceOf(GroupException.class)
@@ -217,9 +213,8 @@ class ParticipateServiceTest {
         @DisplayName("회원 탈퇴한 주최자의 이름은 빈값으로 대체된다")
         @Test
         void findParticipantsWhenHostDeleted() {
-            group.closeEarly();
+            groupModifyService.closeEarly(hostId, groupId);
             memberService.deleteById(hostId);
-            synchronize();
 
             List<String> names = getParticipantNames();
             assertThat(names).containsExactly("", participant.getUserName());
@@ -228,9 +223,8 @@ class ParticipateServiceTest {
         @DisplayName("회원 탈퇴한 참여자의 이름은 빈값으로 대체된다")
         @Test
         void findParticipantsWhenParticipantDeleted() {
-            group.closeEarly();
+            groupModifyService.closeEarly(hostId, groupId);
             memberService.deleteById(participantId);
-            synchronize();
 
             List<String> names = getParticipantNames();
             assertThat(names).containsExactly(host.getUserName(), "");
@@ -242,10 +236,5 @@ class ParticipateServiceTest {
                     .map(MemberResponse::getName)
                     .collect(Collectors.toList());
         }
-    }
-
-    private void synchronize() {
-        entityManager.flush();
-        entityManager.clear();
     }
 }

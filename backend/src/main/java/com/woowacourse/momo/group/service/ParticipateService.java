@@ -15,7 +15,6 @@ import com.woowacourse.momo.member.service.dto.response.MemberResponseAssembler;
 import com.woowacourse.momo.support.distributionlock.DistributionLock;
 
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Service
 public class ParticipateService {
 
@@ -23,7 +22,6 @@ public class ParticipateService {
     private final GroupFindService groupFindService;
 
     @DistributionLock(key = "#groupId")
-    @Transactional
     public void participate(Long groupId, Long memberId) {
         Group group = groupFindService.findGroup(groupId);
         Member member = memberFindService.findMember(memberId);
@@ -31,6 +29,7 @@ public class ParticipateService {
         group.participate(member);
     }
 
+    @Transactional(readOnly = true)
     public List<MemberResponse> findParticipants(Long groupId) {
         Group group = groupFindService.findGroup(groupId);
         List<Member> participants = group.getParticipants();
