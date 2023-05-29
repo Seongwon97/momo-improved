@@ -4,10 +4,10 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
-public class CustomSpringELParser {
+public class DistributionLockKeyGenerator {
 
-    public static Object getDynamicValue(String methodName, String[] parameterNames, Object[] args,
-                                         String key) {
+    public static Object generate(String methodName, String[] parameterNames, Object[] args,
+                                  String key) {
         ExpressionParser parser = new SpelExpressionParser();
         StandardEvaluationContext context = new StandardEvaluationContext();
 

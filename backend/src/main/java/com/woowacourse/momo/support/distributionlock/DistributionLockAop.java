@@ -32,7 +32,7 @@ public class DistributionLockAop {
         Method method = methodSignature.getMethod();
         DistributionLock distributionLock = method.getAnnotation(DistributionLock.class);
 
-        String key = LOCK_PREFIX + CustomSpringELParser.getDynamicValue(methodSignature.getName(),
+        String key = LOCK_PREFIX + DistributionLockKeyGenerator.generate(methodSignature.getName(),
                 methodSignature.getParameterNames(), joinPoint.getArgs(), distributionLock.key());
 
         RLock lock = redissonClient.getLock(key);
