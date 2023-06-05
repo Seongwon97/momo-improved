@@ -2,9 +2,11 @@
 > 
 > - 현재는 백엔드의 코드와 인프라적인 구조를 고민하고 개선하는 작업을 진행하고 있습니다.
 > 
-> - 기존 프로젝트의 배포는 AWS를 통해 진행하였다면 해당 레포지토리는 GCP(Google Cloud Platform)에 배포를 진행하며 여러 학습과 작업을 진행하고 있습니다.  
+> - 기존 프로젝트의 배포는 AWS를 통해 진행하였다면 해당 저장소는 GCP(Google Cloud Platform)에 배포를 진행하며 여러 학습과 작업을 진행하고 있습니다.  
 > 
 > - 기존 브랜치 전략은 Git Flow 정책을 사용하였는데, 현재 저장소에서는 GitHub Flow를 기반으로 Master와 Feature(Fix, Docs, etc) 브랜치로만 브랜치를 분류하여 운영하고 있습니다.
+
+<br>
 
 <div align="center">
 <h1> 모두 모여라, MOMO </h1>
