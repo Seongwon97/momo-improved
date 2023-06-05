@@ -184,7 +184,7 @@ public class GroupSearchRepositoryImpl implements GroupSearchRepositoryCustom {
                 participant.count().intValue().add(host),
                 group.closedEarly,
                 group.calendar.deadline.value,
-                groupImage.imageName
+                groupImage.imageName.max()
         );
     }
 
